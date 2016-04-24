@@ -3,6 +3,8 @@ __author__ = 'xuelinf'
 
 from math import log
 import operator
+import pickle
+import treePlotter
 
 # 计算信息增益
 def calcShannonEnt(dataSet):
@@ -11,7 +13,6 @@ def calcShannonEnt(dataSet):
     for featVec in dataSet:
         currentLabel = featVec[-1]
         labelCount[currentLabel] = labelCount.get(currentLabel, 0) + 1
-    print labelCount
     shannonEnt = 0.0
     for key in labelCount:
         prob = float(labelCount[key])/numEntries
@@ -43,11 +44,9 @@ def chooseBestFeatureToSplit(dataSet):
             prob = len(subDataSet)/float(len(dataSet))
             newEntropy += prob*calcShannonEnt(subDataSet)
         infoGain = baseEntropy - newEntropy  # 信息增益
-        print infoGain
         if infoGain > bestInfoGain:
             bestInfoGain = infoGain
             bestFeature = i
-    print bestInfoGain
     return bestFeature
 
 # 构建决策树,其方法和前边的kNN投票的方式相同
@@ -75,18 +74,52 @@ def creatTree(dataSet, labels):
         myTree[bestFeatLabel][value] = creatTree(splitDataSet(dataSet, bestFeat, value), subLabels)
     return myTree
 
-def creatDataSet():
-    dataSet = [[1, 1, 1, 'yes'],
-               [1, 1, 1, 'yes'],
-               [1, 0, 0, 'no'],
-               [0, 1, 0, 'no'],
-               [0, 1, 0, 'no']]
-    labels = ['no surfaceing', 'flippers', 'jump']
-    return dataSet, labels
+# # 简单测试集,删
+# def creatDataSet():
+#     dataSet = [[1, 1, 'yes'],
+#                [1, 1, 'yes'],
+#                [1, 0, 'no'],
+#                [0, 1, 'no'],
+#                [0, 1, 'no']]
+#     labels = ['no surfacing', 'flippers']
+#     return dataSet, labels
+
+# 使用决策树事例,第一个是建成的树,第二个是标签列表,第三个是测试用例
+def classify(inputTree,featLabels,testVec):
+    firstStr = inputTree.keys()[0]
+    secondDict = inputTree[firstStr]
+    print featLabels
+    featIndex = featLabels.index(firstStr)  # 直接找到该属性在标签列表所处的位置
+    key = testVec[featIndex]  # 这样直接就可以根据我们的测试例该位置的值,进行判断
+    valueOfFeat = secondDict[key]
+    if isinstance(valueOfFeat, dict):  # 是否叶子节点,否则继续决策
+        classLabel = classify(valueOfFeat, featLabels, testVec)
+    else: classLabel = valueOfFeat
+    return classLabel
+
+# pickle模块,存储决策树,该模块是实现数据序列和反序列化,可以将对象保存在文件里
+def storeTree(inputTree, filename):
+    fw = open(filename, 'w')
+    pickle.dump(inputTree, fw)
+    fw.close()
+
+# 使用pickle ,可以重构原来的python 对象,类似于java 的序列化
+def grabTree(filename):
+    fr = open(filename)
+    return pickle.load(fr)
 
 if __name__ == '__main__':
-    myDat, labels = creatDataSet()
-    print splitDataSet(myDat, 1, 1)
-    print calcShannonEnt(myDat)
-    print chooseBestFeatureToSplit(myDat)
-    print creatTree(myDat, labels)
+    # myDat, labels = creatDataSet()
+    # featLabels = labels[:]
+    # print chooseBestFeatureToSplit(myDat)
+    # tree = creatTree(myDat, labels)
+    # print tree
+    # print classify(tree, featLabels, [1,0])
+    fr = open('lenses.txt')
+    lenses = [e.strip().split('\t') for e in fr.readlines()]
+    lensesLabels = ['age', 'prescript','astigmatic', 'tearRate']
+    tree = creatTree(lenses, lensesLabels)
+    print tree
+    # treePlotter.createPlot(tree)
+    # storeTree(tree, 'storeTree.txt')
+    print grabTree('storeTree.txt')
