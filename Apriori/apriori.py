@@ -70,25 +70,27 @@ def generateRules(L, supportData, minConf = 0.5):
             if i > 1:
                 rulesFromConseq(freqSet, H1, supportData, bigRuleList, minConf)
             else:
-                calcConf(freqSet, H1, supportData, bigRuleList, minConf)
+                calcConf(freqSet, H1, supportData, bigRuleList, minConf)  # 二元的关联规则是最起始的关联规则
     return bigRuleList
 
+# 针对H 这个后件集合,从频繁项集中挖去后件,前边的前件-->后件的置信度
 def calcConf(freqSet, H, supportData, brl, minConf = 0.5):
     prunedH = []
     for conseq in H:
-        conf = supportData[freqSet]/supportData[freqSet-conseq]
+        conf = supportData[freqSet]/supportData[freqSet-conseq]  # p->h,support(p|h)/support(p)
         if conf >= minConf:
-            print freqSet-conseq,'-->',conseq,'conf:',conf
+            print freqSet-conseq,'-->',conseq,'conf:',conf  # 将置信度高于最低限的组合打印出来
             brl.append((freqSet-conseq, conseq,conf))
-            prunedH.append(conseq)
+            prunedH.append(conseq)   # 将这些后件保存起来,以生成更长的后件
     return prunedH
 
+# 这里就是产生各种后件的函数,第一个参数是频繁项集,第二个是规则后件
 def rulesFromConseq(freqSet, H, supportData, brl, minConf = 0.5):
-    m = len(H[0])
-    if len(freqSet) >(m+1):
-        Hmp1 = aprioriGen(H, m+1)
-        Hmp1 = calcConf(freqSet,Hmp1, supportData,brl,minConf)
-        if len(Hmp1) > 1:
+    m = len(H[0])  # 获得当前规则后件的大小
+    if len(freqSet) >(m+1):  # 如果频繁项集的大小足以产生m+1大小的后件
+        Hmp1 = aprioriGen(H, m+1)  # 产生m+1长度后件的组合
+        Hmp1 = calcConf(freqSet, Hmp1, supportData, brl, minConf)  # 对这些后件,计算置信
+        if len(Hmp1) > 1:  # 如果当前的后件组合的数量,足以生成更长的后件,那就递归生成咯
             rulesFromConseq(freqSet, Hmp1, supportData, brl, minConf)
 
 if __name__ == '__main__':
