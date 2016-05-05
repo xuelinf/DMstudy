@@ -1,11 +1,24 @@
 #coding: utf-8
 __author__ = 'xuelinf'
 
-d = [[1,2,3],[4,5,6],[7,8,9]]
-tag = [2,0]
+n = 3
+cin = [1, 4, 1]
 
-print d[::]
+res = [[],[],[],[]]
 
-print d[:-3:-1]
-# dm = map(float, d)
-# print dm
+for i, e in enumerate(cin):
+    res[e-1].append(i)
+
+step = 0
+dia = 0
+flag = 0
+while (dia < n):
+    for i in range(4):
+        if len(res[i]) > 0:
+            if res[i][0] == dia:
+                if i != flag:
+                    step += 1
+                    flag = i
+                dia += 1
+                res[i].remove(res[i][0])
+print step
